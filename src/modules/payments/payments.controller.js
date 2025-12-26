@@ -1,41 +1,51 @@
 const supabase = require('../../config/supabase');
 
-exports.getPayments = async (req, res) => {
-  const { clientId } = req.query;
-  const { data, error } = await supabase.from('payments').select('*').eq('clientId', clientId);
+exports.getPaymentsByClient = async (req, res) => {
+  const { clientid } = req.params;
+  const { data, error } = await supabase.from('payments').select('*').eq('clientid', clientid).order('paid_from', { ascending: false });
 
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 };
 
 exports.createPayment = async (req, res) => {
-  const { clientId, amount, date, status } = req.body;
+  const { clientid, amount, paid_from, paid_until, status } = req.body;
+
   const { data, error } = await supabase
     .from('payments')
-    .insert([{ clientId, amount, date, status }])
-    .select('*');
+    .insert([{ clientid, amount, paid_from, paid_until, status }])
+    .select()
+    .single();
 
   if (error) return res.status(500).json({ error: error.message });
-  res.status(201).json(data[0]);
+  res.status(201).json(data);
 };
 
 exports.updatePayment = async (req, res) => {
   const { id } = req.params;
-  const { amount, date, status } = req.body;
+  const { amount, paid_from, paid_until, status } = req.body;
+
   const { data, error } = await supabase
     .from('payments')
-    .update({ amount, date, status })
+    .update({ amount, paid_from, paid_until, status })
     .eq('id', id)
-    .select('*');
+    .select()
+    .single();
 
   if (error) return res.status(500).json({ error: error.message });
-  res.json(data[0]);
+  res.json(data);
 };
 
 exports.deletePayment = async (req, res) => {
   const { id } = req.params;
-  const { data, error } = await supabase.from('payments').delete().eq('id', id).select('*');
+
+  const { data, error } = await supabase
+    .from('payments')
+    .delete()
+    .eq('id', id)
+    .select()
+    .single();
 
   if (error) return res.status(500).json({ error: error.message });
-  res.json({ message: 'Payment deleted', payment: data[0] });
+  res.json({ message: 'Payment deleted', payment: data });
 };
