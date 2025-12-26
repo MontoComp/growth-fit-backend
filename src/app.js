@@ -3,6 +3,7 @@ const cors = require('cors');
 const app = express();
 
 // Middlewares
+//app.use(cors({ origin: 'http://localhost:4200' }));
 app.use(cors({
   origin: [
     'https://growth-fit-frontend.vercel.app',
