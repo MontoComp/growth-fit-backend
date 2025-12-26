@@ -3,7 +3,13 @@ const cors = require('cors');
 const app = express();
 
 // Middlewares
-app.use(cors({ origin: 'http://localhost:4200' }));
+app.use(cors({
+  origin: [
+    'https://growth-fit-frontend.vercel.app',
+  ],
+  methods: ['GET','POST','PUT','DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 app.use(express.json());
 
 // Rutas
