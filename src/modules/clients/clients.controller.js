@@ -1,7 +1,6 @@
 const supabase = require('../../config/supabase');
 
 exports.getClientsByGym = async (req, res) => {
-  console.log('Fetching clients for gym:', req.params.gymId);
   const { gymId } = req.params;
   const { data, error } = await supabase.from('clients').select('*').eq('gymid', gymId);
 

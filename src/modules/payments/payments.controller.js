@@ -1,8 +1,8 @@
 const supabase = require('../../config/supabase');
 
 exports.getPaymentsByClient = async (req, res) => {
-  const { clientid } = req.params;
-  const { data, error } = await supabase.from('payments').select('*').eq('clientid', clientid).order('paid_from', { ascending: false });
+  const { clientId } = req.params;
+  const { data, error } = await supabase.from('payments').select('*').eq('clientid', clientId).order('paid_from', { ascending: false });
 
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
