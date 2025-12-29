@@ -14,6 +14,7 @@ exports.getPaymentsByClient = async (req, res) => {
       paid_from,
       paid_until,
       created_at,
+      is_active,
       plans (
         name,
         price,
@@ -66,6 +67,7 @@ exports.createPayment = async (req, res) => {
         amount: totalAmount,
         paid_from: startDate.format("YYYY-MM-DD"),
         paid_until: endDate.format("YYYY-MM-DD"),
+        is_active: true,
       },
     ])
     .select()
@@ -106,6 +108,7 @@ exports.renewPayment = async (req, res) => {
       .select("*")
       .eq("clientid", clientid)
       .order("paid_until", { ascending: false })
+      .eq("is_active", true)
       .limit(1)
       .maybeSingle();
 
@@ -114,30 +117,55 @@ exports.renewPayment = async (req, res) => {
     }
 
     const today = moment().startOf("day");
-    let paidFrom;
+    const totalMonths = plan.duration_months * months;
+    const amountToAdd = plan.price * months;
 
     if (lastPayment && moment(lastPayment.paid_until).isSameOrAfter(today)) {
-      //paidFrom = moment(lastPayment.paid_until).add(1, 'day');
-      paidFrom = moment(lastPayment.paid_until);
-    } else {
-      paidFrom = today;
+      const newPaidUntil = moment(lastPayment.paid_until)
+        .add(totalMonths, "months")
+        .format("YYYY-MM-DD");
+
+      const { data: updatedPayment, error: updateError } = await supabase
+        .from("payments")
+        .update({
+          months: lastPayment.months + months,
+          amount: Number(lastPayment.amount) + amountToAdd,
+          paid_until: newPaidUntil,
+        })
+        .eq("id", lastPayment.id)
+        .select()
+        .single();
+
+      if (updateError) {
+        return res.status(500).json({ error: updateError.message });
+      }
+
+      return res.status(200).json({
+        message: "Pago actualizado correctamente",
+        payment: updatedPayment,
+      });
     }
 
-    const totalMonths = plan.duration_months * months;
+    await supabase
+      .from("payments")
+      .update({ is_active: false })
+      .eq("clientid", clientid);
 
-    const paidUntil = paidFrom.clone().add(totalMonths, "months");
-    const totalAmount = plan.price * months;
+    const paidFrom = today;
+    const paidUntil = today.clone().add(totalMonths, "months");
 
-    const { data: payment, error: insertError } = await supabase
+
+    const { data: newPayment, error: insertError } = await supabase
       .from("payments")
       .insert([
         {
           clientid,
           planid,
           months,
-          amount: totalAmount,
+          amount: amountToAdd,
           paid_from: paidFrom.format("YYYY-MM-DD"),
           paid_until: paidUntil.format("YYYY-MM-DD"),
+          is_active: true,
         },
       ])
       .select()
@@ -153,8 +181,8 @@ exports.renewPayment = async (req, res) => {
       .eq("id", clientid);
 
     return res.status(201).json({
-      message: "Pago renovado correctamente",
-      payment,
+      message: "Nuevo pago creado correctamente",
+      payment: newPayment,
     });
   } catch (err) {
     console.error("Renew payment error:", err);
