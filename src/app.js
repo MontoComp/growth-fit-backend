@@ -20,6 +20,7 @@ app.use('/clients', require('./modules/clients/clients.routes'));
 app.use('/payments', require('./modules/payments/payments.routes'));
 app.use('/dashboard', require('./modules/dashboard/dashboard.routes'));
 app.use('/generics', require('./modules/generics/generics.routes'));
+app.use('/plans', require('./modules/plans/plans.routes'));
 
 // Health check
 app.get('/health', (_, res) => res.json({ status: 'ok' }));
