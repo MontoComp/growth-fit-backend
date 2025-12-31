@@ -15,7 +15,7 @@ exports.createClient = async (req, res) => {
 
   const { data, error } = await supabase
     .from('clients')
-    .insert([{ gymid, name, email, phone, created_at: timestamp }])
+    .insert([{ gymid, name, email, phone, created_at: timestamp, status: 'INACTIVE', }])
     .select('*')
     .single();
 
@@ -25,10 +25,10 @@ exports.createClient = async (req, res) => {
 
 exports.updateClient = async (req, res) => {
   const { id } = req.params;
-  const { name, email, phone, status } = req.body;
+  const { name, email, phone } = req.body;
   const { data, error } = await supabase
     .from('clients')
-    .update({ name, email, phone, status })
+    .update({ name, email, phone })
     .eq('id', id)
     .select('*')
     .single();
