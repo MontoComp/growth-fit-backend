@@ -7,5 +7,6 @@ router.get('/:gymId', jwtMiddleware, clientsController.getClientsByGym);
 router.post('/', jwtMiddleware, clientsController.createClient);
 router.put('/:id', jwtMiddleware, clientsController.updateClient);
 router.delete('/:id', jwtMiddleware, clientsController.deleteClient);
+router.get('/:gymId/status', jwtMiddleware, clientsController.getClientsWithStatus);
 
 module.exports = router;
