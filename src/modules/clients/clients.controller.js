@@ -20,7 +20,7 @@ exports.createClient = async (req, res) => {
   const { data, error } = await supabase
     .from("clients")
     .insert([
-      { gymid, name, email, phone, created_at: timestamp, status: "INACTIVE" },
+      { gymid, name, email, phone, created_at: timestamp, status: "INACTIVE", is_active: true },
     ])
     .select("*")
     .single();
@@ -47,7 +47,7 @@ exports.deleteClient = async (req, res) => {
   const { id } = req.params;
   const { data, error } = await supabase
     .from("clients")
-    .delete()
+    .update({ is_active: false })
     .eq("id", id)
     .select("*")
     .single();
@@ -64,7 +64,7 @@ exports.getClientsWithStatus = async (req, res) => {
       payments (
         paid_until
       )
-    `).eq("gymid", gymId);;
+    `).eq("gymid", gymId).eq("is_active", true);
 
   const result = clients.map((client) => {
     const lastPayment = getLastPayment(client.payments);
