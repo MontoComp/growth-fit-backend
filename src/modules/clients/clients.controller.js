@@ -1,4 +1,5 @@
 const supabase = require("../../config/supabase");
+const moment = require("moment");
 
 exports.getClientsByGym = async (req, res) => {
   const { gymId } = req.params;
@@ -66,7 +67,7 @@ exports.getClientsWithStatus = async (req, res) => {
     `).eq("gymid", gymId);;
 
   const result = clients.map((client) => {
-    const lastPayment = client.payments?.[0];
+    const lastPayment = getLastPayment(client.payments);
     const status = getClientStatus(lastPayment);
 
     return {
@@ -78,6 +79,16 @@ exports.getClientsWithStatus = async (req, res) => {
 
   res.json(result);
 };
+
+function getLastPayment(payments) {
+  if (!payments || payments.length === 0) return null;
+
+  return payments.reduce((latest, current) =>
+    moment(current.paid_until).isAfter(moment(latest.paid_until))
+      ? current
+      : latest
+  );
+}
 
 function getClientStatus(payment) {
   if (!payment) return "EXPIRED";
