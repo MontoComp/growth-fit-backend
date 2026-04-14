@@ -1,4 +1,5 @@
 const supabase = require('../../config/supabase');
+const moment = require("moment");
 
 const getDashboardMetrics = async (req, res) => {
   try {
@@ -36,6 +37,7 @@ const getDashboardMetrics = async (req, res) => {
       .from('payments')
       .select(`
         id,
+        clientid,
         amount,
         paid_until,
         created_at,
@@ -52,9 +54,23 @@ const getDashboardMetrics = async (req, res) => {
     /* ==========================
        MÉTRICAS
     ========================== */
-    const pendingPayments = payments.filter(
-      p => p.paid_until < today
-    );
+    const latestPaymentByClient = {};
+
+    payments.forEach(p => {
+      const clientId = p.clientid;
+
+      if (!latestPaymentByClient[clientId]) {
+        latestPaymentByClient[clientId] = p;
+      } else {
+        if (new Date(p.paid_until) > new Date(latestPaymentByClient[clientId].paid_until)) {
+          latestPaymentByClient[clientId] = p;
+        }
+      }
+    });
+
+    const activeClientsCount = Object.values(latestPaymentByClient).filter(
+      p => p.paid_until >= today
+    ).length;
 
     const currentMonth = today.slice(0, 7);
     const revenueMonth = payments
@@ -92,7 +108,7 @@ const getDashboardMetrics = async (req, res) => {
         totalGyms: gyms.length,
         totalClients: clients.length,
         revenueMonth,
-        pendingPayments: pendingPayments.length
+        activeClients: activeClientsCount
       },
       revenueByMonth: revenueChart,
       lastPayments
